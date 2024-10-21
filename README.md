@@ -94,20 +94,16 @@ The following dependencies are required to run the project. See `requirements.tx
 - [Weights and Biases](https://wandb.ai/)
 - [CMA-ES](https://github.com/CMA-ES/c-cmaes)
 
-## Contributing
 
-Contributions to AGMitsubaRendererAndOptimizer are welcome! Please fork the repository, make your changes, and submit a pull request.
+## Optimization Example
 
-1. Fork the repository.
-2. Create your feature branch (`git checkout -b feature/my-new-feature`).
-3. Commit your changes (`git commit -am 'Add some feature'`).
-4. Push to the branch (`git push origin feature/my-new-feature`).
-5. Create a new Pull Request.
+<p align="center">
+  <img src="images/initial.png" alt="Initial Image" width="250" />
+  <img src="images/optimization_result.png" alt="Optimization Result" width="250" />
+  <img src="images/true_image.png" alt="Ground Truth" width="250" />
+</p>
 
-## License
+<p align="center">
+  <b>Initial Image</b> &emsp; &emsp; <b>Optimization Result</b> &emsp; &emsp; <b>Ground Truth</b>
+</p>
 
-AGMitsubaRendererAndOptimizer is licensed under the MIT License. See `LICENSE` for more information.
-
-![Optimization Initial Image](images/initial.png)
-![Optimization Results](images/optimization_result.png)
-![Optimization Ground Truth](images/true_image.png)
