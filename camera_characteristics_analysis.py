@@ -13,11 +13,12 @@ from scipy.optimize import curve_fit, minimize
 import sys
 
 from streamlit import latex
+from tqdm import tqdm
 
 # ===============================
 # Constants
 # ===============================
-CACHE_CSV_FILE_PATH = 'Python/data.csv'
+CACHE_CSV_FILE_PATH = 'uploads/data.csv'
 LIMIT_LUMINANCE = 2 ** 14 - 1
 CACHE_COLUMNS = ["Shutter_Speed", "Max_Pixel_Luminance", "ZIP_File"]
 INITIAL_PARAMS = [1, 1]
@@ -161,7 +162,7 @@ def process_zip_files(zip_files, existing_df):
     all_data = existing_df.to_dict('records') if existing_df is not None else []
     existing_zip_files = get_existing_zip_files(existing_df)
 
-    for zip_file in zip_files:
+    for zip_file in tqdm(zip_files):
         if os.path.basename(zip_file) in existing_zip_files:
             continue  # Skip already processed ZIP files
 
@@ -201,10 +202,10 @@ def process_file_pairs(pairs, zip_file_name):
         list: List of dictionaries containing processed data.
     """
     data = []
-    for jpeg_path, cr3_path in pairs:
+    for jpeg_path, cr3_path in tqdm(pairs, leave=False):
         jpeg_shutter_speed = process_jpeg(jpeg_path)
         cr3_max_r, cr3_max_g, cr3_max_b, cr3_max_luminance = process_cr3(cr3_path)
-        print(f'ZIP File: {zip_file_name}, Shutter Speed: {jpeg_shutter_speed}, Max Pixel Luminance: {cr3_max_luminance}')
+        tqdm.write(f'ZIP File: {zip_file_name}, Shutter Speed: {jpeg_shutter_speed}, Max Pixel Luminance: {cr3_max_luminance}')
 
         if cr3_max_r < LIMIT_LUMINANCE and cr3_max_g < LIMIT_LUMINANCE and cr3_max_b < LIMIT_LUMINANCE and cr3_max_luminance < LIMIT_LUMINANCE:
             data.append({
