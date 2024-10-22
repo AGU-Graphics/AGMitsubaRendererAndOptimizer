@@ -1,7 +1,8 @@
+import cv2
 import mitsuba as mi
-import wandb
 import os
 import gc
+import numpy as np
 import torch
 import time
 
@@ -50,20 +51,12 @@ def main():
         "convergence_threshold": convergence_threshold,
         "lambda_tv": lambda_tv
     }
-    
-    # Initialize wandb
-    wandb.init(
-        project="mitsuba_optimization",
-        config=opt_config,
-        name=f"orange_adam_spp_{spp}_lr_{learning_rate}_fd_{fd_epsilon}",
-    )
 
     # Load the scene
     try:
         scene = mi.load_file(scene_path)
     except Exception as e:
         print(f"Error loading scene: {e}")
-        wandb.finish()
         return
 
     # Traverse the scene to find the parameters
@@ -72,7 +65,6 @@ def main():
     print(f"\n[Main] Parameter key: {param_key}")
     if param_key not in params:
         print(f"Error: Parameter key '{param_key}' not found in the scene parameters.")
-        wandb.finish()
         return
     else:
         print(f"Parameter '{param_key}' found.")
@@ -81,7 +73,6 @@ def main():
         true_scene = mi.load_file(true_scene_path)
     except Exception as e:
         print(f"Error loading true scene: {e}")
-        wandb.finish()
         return
 
     # Load the true image and the true parameter values
@@ -93,7 +84,6 @@ def main():
         )
     except Exception as e:
         print(f"Error loading true image and parameters: {e}")
-        wandb.finish()
         return
 
     print(f"\n[Main] True parameters: {true_params_np}")
@@ -104,26 +94,15 @@ def main():
     os.makedirs(output_dir, exist_ok=True)
 
     # Render the true image
-    # convert the image to uint8 and save it
-    true_image = (true_image_np * 255).astype('uint8')
-    mi.util.write_bitmap(f'{output_dir}/true_image.png', true_image, write_async=True)
-    del true_image
+    # convert to uint8
+    true_image_np = (true_image_np * 255).astype(np.uint8)
+    mi.util.write_bitmap(f'{output_dir}/true_image.png', true_image_np, write_async=True)
+    del true_image_np
     gc.collect()
     torch.cuda.empty_cache()
 
-    # Log the true parameters as a wandb config
-    wandb.config.update({
-        "true_parameters": true_params_np.tolist()
-    })
-
-    # Run the optimizer
-    adam_optimizer(opt_config, scene, params, true_image_np, true_params_np, param_key, output_dir)
-
     print('Final parameter values:')
     print(params[param_key])
-
-    # Finish the wandb run
-    wandb.finish()
 
 if __name__ == "__main__":
     main()

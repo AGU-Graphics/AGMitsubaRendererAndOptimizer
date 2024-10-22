@@ -38,19 +38,6 @@ def calc_huber_loss(image1, image2, delta=0.05):
     huber_loss = np.mean(np.where(np.abs(diff) < delta, 0.5 * diff ** 2, delta * (np.abs(diff) - 0.5 * delta)))
     return huber_loss
 
-def total_variation(image):
-    """
-    Compute the total variation of an image.
-
-    Parameters:
-    - image: numpy array of shape (H, W, C)
-
-    Returns:
-    - tv: Total variation of the image.
-    """
-    tv = np.sum(np.abs(image[:-1, :, :] - image[1:, :, :])) + np.sum(np.abs(image[:, :-1, :] - image[:, 1:, :]))
-    return tv
-
 def compute_loss(scene, params, param_key, param_values, true_image_np, it, output_dir, spp=16, lambda_tv=0.0):
     try:
         # Update the scene parameters
@@ -62,7 +49,8 @@ def compute_loss(scene, params, param_key, param_values, true_image_np, it, outp
 
         # Save the image to disk for visualization (optional)
         if it % 50 == 0:
-            mi.util.write_bitmap(f'{output_dir}/iter_{it:04d}.png', image, write_async=True)
+            output_image = (image * 255).astype(np.uint8)
+            mi.util.write_bitmap(f'{output_dir}/iter_{it:04d}.png', output_image, write_async=True)
 
         # Convert image to numpy array
         image = np.array(image)
@@ -74,10 +62,6 @@ def compute_loss(scene, params, param_key, param_values, true_image_np, it, outp
 
         # Compute the Huber loss
         loss = calc_huber_loss(image, true_image_np, delta=0.05)
-
-        # Compute Total Variation regularization
-        tv_loss = total_variation(image)
-        loss = loss + lambda_tv * tv_loss
 
         # Delete the image to free up memory
         del image

@@ -1,7 +1,6 @@
 import mitsuba as mi
 import numpy as np
 
-
 def load_true_image_and_values(img_path, true_scene, key):
     # Load the true scene and extract the true parameters
     true_scene_params = mi.traverse(true_scene)
