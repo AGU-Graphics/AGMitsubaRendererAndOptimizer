@@ -103,7 +103,7 @@ def main():
 
     # Set the timestamp for the run
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    output_dir = f'output/{timestamp}'
+    output_dir = f'output/CMA-ES/spp_{spp}_sigma0_{sigma0}_{timestamp}'
     os.makedirs(output_dir, exist_ok=True)
 
     # Run the optimizer

@@ -38,15 +38,14 @@ def compute_loss(scene, params, param_key, param_values, true_image_np, it, outp
         image = np.array(image)
 
         # Compute the mean squared error loss
-        diff = image - true_image_np
-        mse_loss = np.mean(diff ** 2)
+        mse_loss = np.mean((image - true_image_np) ** 2)
 
         # Compute Total Variation regularization
         tv_loss = total_variation(image)
         loss = mse_loss + lambda_tv * tv_loss
 
         # Delete the image to free up memory
-        del image, diff
+        del image
         gc.collect()
         torch.cuda.empty_cache()
 

@@ -37,6 +37,15 @@ cd AGMitsubaRendererAndOptimizer
 pip install -r requirements.txt
 ```
 
+## Download Pytorch
+
+- From this webpage, get the desired command to download pytorch.
+
+```bash
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```
+
+
 Ensure that [Mitsuba 3](https://mitsuba.readthedocs.io/) is properly installed and configured on your system.
 
 ## Usage

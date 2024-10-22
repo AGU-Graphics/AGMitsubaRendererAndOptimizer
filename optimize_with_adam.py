@@ -16,10 +16,10 @@ def main():
     param_key = 'Cube.interior_medium.sigma_t.value.value'
 
     # Rendering parameters
-    spp = 16
+    spp = 462
 
     # Adam optimizer parameters
-    learning_rate = 0.01
+    learning_rate = 0.02
     fd_epsilon = 0.004
     beta1 = 0.9
     beta2 = 0.999
@@ -100,11 +100,11 @@ def main():
 
     # Set the timestamp for the run
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    output_dir = f'output/Adam_spp_{spp}_lr_{learning_rate}_{timestamp}'
+    output_dir = f'output/Adam/spp_{spp}_lr_{learning_rate}_{timestamp}'
     os.makedirs(output_dir, exist_ok=True)
 
     # Render the true image
-    true_image = mi.render(true_scene, spp=spp)
+    true_image = mi.TensorXf(true_image_np)
     mi.util.write_bitmap(f'{output_dir}/true_image.png', true_image, write_async=True)
     del true_image
     gc.collect()
