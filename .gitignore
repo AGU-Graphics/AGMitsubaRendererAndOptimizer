@@ -179,3 +179,4 @@ pyrightconfig.json
 # For this project
 output/
 wandb/
+/uploads/
