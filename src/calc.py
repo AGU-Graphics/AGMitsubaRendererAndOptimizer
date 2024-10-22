@@ -24,7 +24,7 @@ def total_variation(image):
 def compute_loss(scene, params, param_key, param_values, true_image_np, it, output_dir, spp=16, lambda_tv=0.0):
     try:
         # Update the scene parameters
-        params[param_key] = mi.Color3f(param_values)
+        params[param_key] = param_values
         params.update()
 
         # Render the image

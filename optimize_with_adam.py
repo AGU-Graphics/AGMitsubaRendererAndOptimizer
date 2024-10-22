@@ -13,7 +13,7 @@ def main():
     mi.set_variant('cuda_ad_rgb')
 
     # Parameter key to optimize
-    param_key = 'Cube.interior_medium.sigma_t.value.value'
+    param_key = 'Cube.interior_medium.scale'
 
     # Rendering parameters
     spp = 462
@@ -31,11 +31,11 @@ def main():
     lambda_tv = 0.0
 
     # True Scene
-    true_scene_path = 'scenes/true_scene.xml'
-    true_image_path = 'data/true_image.csv'
+    true_scene_path = 'scenes/true_scene_orange.xml'
+    true_image_path = 'data/image_pixels.csv'
 
     # Scene to optimize
-    scene_path = 'scenes/scene.xml'
+    scene_path = 'scenes/true_scene_orange.xml'
 
     opt_config = {
         "optimizer": "Adam with finite differences",
@@ -55,7 +55,7 @@ def main():
     wandb.init(
         project="mitsuba_optimization",
         config=opt_config,
-        name=f"adam_spp_{spp}_lr_{learning_rate}_fd_{fd_epsilon}",
+        name=f"orange_adam_spp_{spp}_lr_{learning_rate}_fd_{fd_epsilon}",
     )
 
     # Load the scene
