@@ -8,6 +8,36 @@ import numpy as np
 
 from src.render import renderer
 
+def calc_mse(image1, image2):
+    """
+    Calculate the Mean Squared Error (MSE) between two images.
+
+    Parameters:
+    - image1: numpy array of shape (H, W, C)
+    - image2: numpy array of shape (H, W, C)
+
+    Returns:
+    - mse: Mean Squared Error between the two images.
+    """
+    mse = np.mean((image1 - image2) ** 2)
+    return mse
+
+def calc_huber_loss(image1, image2, delta=0.05):
+    """
+    Calculate the Huber loss between two images.
+
+    Parameters:
+    - image1: numpy array of shape (H, W, C)
+    - image2: numpy array of shape (H, W, C)
+    - delta: Threshold for the Huber loss.
+
+    Returns:
+    - huber_loss: Huber loss between the two images.
+    """
+    diff = image1 - image2
+    huber_loss = np.mean(np.where(np.abs(diff) < delta, 0.5 * diff ** 2, delta * (np.abs(diff) - 0.5 * delta)))
+    return huber_loss
+
 def total_variation(image):
     """
     Compute the total variation of an image.
@@ -37,12 +67,17 @@ def compute_loss(scene, params, param_key, param_values, true_image_np, it, outp
         # Convert image to numpy array
         image = np.array(image)
 
-        # Compute the mean squared error loss
-        mse_loss = np.mean((image - true_image_np) ** 2)
+        #
+        # # Compute the mean squared error loss
+        # loss = calc_mse(image, true_image_np)
+        #
+
+        # Compute the Huber loss
+        loss = calc_huber_loss(image, true_image_np, delta=0.05)
 
         # Compute Total Variation regularization
         tv_loss = total_variation(image)
-        loss = mse_loss + lambda_tv * tv_loss
+        loss = loss + lambda_tv * tv_loss
 
         # Delete the image to free up memory
         del image

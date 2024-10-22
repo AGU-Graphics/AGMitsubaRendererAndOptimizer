@@ -19,7 +19,7 @@ def main():
     spp = 462
 
     # Adam optimizer parameters
-    learning_rate = 0.02
+    learning_rate = 1.0
     fd_epsilon = 0.004
     beta1 = 0.9
     beta2 = 0.999
@@ -32,7 +32,7 @@ def main():
 
     # True Scene
     true_scene_path = 'scenes/true_scene_orange.xml'
-    true_image_path = 'data/image_pixels.csv'
+    true_image_path = 'data/true_orange.csv'
 
     # Scene to optimize
     scene_path = 'scenes/true_scene_orange.xml'
