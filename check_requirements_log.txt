@@ -1,0 +1,72 @@
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', param_key='Cube.interior_medium.sigma_t.value.value', opt_config='output/Adam/experimentzettai_spp_16_lr_0.002_20241022-192901\\opt_config.json', new_value='[[0.10000000149011612, 0.10000000149011612, 0.10000000149011612]]')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', param_key='Cube.interior_medium.sigma_t.value.value', opt_config='output/Adam/experimentsaikou_spp_16_lr_0.002_20241022-195307\\opt_config.json', new_value='[[0.10000000149011612, 0.10000000149011612, 0.10000000149011612]]')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', param_key='Cube.interior_medium.sigma_t.value.value', opt_config='outputs/Adam/testtesttest_spp_366_lr_0.002_20241022-202930\\opt_config.json', new_value='[[0.10000000149011612, 0.10000000149011612, 0.10000000149011612]]')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', param_key='Cube.interior_medium.sigma_t.value.value', opt_config='outputs/Adam/test2_spp_16_lr_0.002_20241022-205012\\opt_config.json', new_value='[[0.10000000149011612, 0.10000000149011612, 0.10000000149011612]]')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', param_key='Cube.interior_medium.sigma_t.value.value', opt_config='outputs/Adam/test_realtime_spp_16_lr_0.002_20241022-205436\\opt_config.json', new_value='[[0.10000000149011612, 0.10000000149011612, 0.10000000149011612]]')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', param_key='Cube.interior_medium.sigma_t.value.value', opt_config='outputs/Adam/hellow_spp_462_lr_0.002_20241022-205942\\opt_config.json', new_value='[[0.10000000149011612, 0.10000000149011612, 0.10000000149011612]]')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', param_key='Cube.interior_medium.sigma_t.value.value', opt_config='outputs/Adam/hellow_spp_462_lr_0.002_20241022-205942\\opt_config.json', new_value='[[0.10000000149011612, 0.10000000149011612, 0.10000000149011612]]')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', param_key='Cube.interior_medium.sigma_t.value.value', opt_config='outputs/Adam/test_st_spp_16_lr_0.002_20241022-220001\\opt_config.json', new_value='[[0.4, 0.4, 0.4]]')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/Experiment2_spp_16_lr_0.002_20241023-112555\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/Experiment2_spp_16_lr_0.002_20241023-112555\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/Experiment2_spp_16_lr_0.002_20241023-112555\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/Experiment2_spp_16_lr_0.002_20241023-112555\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/Experiment2_spp_16_lr_0.002_20241023-112555\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/Experiment2_spp_16_lr_0.002_20241023-112555\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/Experiment2_spp_16_lr_0.002_20241023-112555\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/Experiment2_spp_16_lr_0.002_20241023-112555\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/bea_spp_16_lr_0.002_20241023-121418\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/beaaae_spp_16_lr_0.002_20241023-122028\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/test1_spp_16_lr_0.002_20241023-124413\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/test2_spp_16_lr_0.002_20241023-125123\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/Hello_spp_16_lr_0.002_20241023-130820\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/Hello1_spp_16_lr_0.002_20241023-131658\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/aaa_spp_16_lr_0.002_20241023-132723\\opt_config.json')
+check_requirements.py called
+Current working directory: C:\Users\narus\ML_projects\AGMitsubaRendererAndOptimizer
+Arguments: Namespace(scene='scenes/scene.xml', true_scene='scenes/true_scene.xml', true_image_path='inputs/true_image.csv', opt_config='outputs/Adam/aaaaa_spp_16_lr_0.002_20241023-133310\\opt_config.json')

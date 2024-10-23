@@ -137,6 +137,7 @@ def main():
         # Section 4: Select parameters to optimize
         st.header('Select Parameters to Optimize')
 
+        # After selecting parameters to optimize
         if 'param_keys' in st.session_state:
             selected_params = st.multiselect(
                 'Parameters to Optimize',
@@ -165,6 +166,10 @@ def main():
                 return str(arr)
 
             param_new_values = {}
+            param_learning_rates = {}
+            param_fd_epsilons = {}
+            param_ranges = {}
+
             for param in selected_params:
                 current_value = st.session_state['params'][param]
                 formatted_current = array_to_string(current_value)
@@ -182,6 +187,59 @@ def main():
                     st.error(f'Invalid input for new value of {param}: {e}')
                     return
 
+                # Input for individual learning rate
+                learning_rate_input = st.text_input(
+                    f'Learning Rate for {param}',
+                    value=str(learning_rate),
+                    key=f'learning_rate_{param}'
+                )
+                try:
+                    lr = float(learning_rate_input)
+                    if lr <= 0:
+                        raise ValueError("Learning rate must be positive.")
+                    param_learning_rates[param] = lr
+                except Exception as e:
+                    st.error(f'Invalid learning rate for {param}: {e}')
+                    return
+
+                # Input for individual finite difference epsilon
+                fd_epsilon_input = st.text_input(
+                    f'Finite Difference Epsilon for {param}',
+                    value=str(fd_epsilon),
+                    key=f'fd_epsilon_{param}'
+                )
+                try:
+                    fd_eps = float(fd_epsilon_input)
+                    if fd_eps <= 0:
+                        raise ValueError("Finite difference epsilon must be positive.")
+                    param_fd_epsilons[param] = fd_eps
+                except Exception as e:
+                    st.error(f'Invalid finite difference epsilon for {param}: {e}')
+                    return
+
+                # Inputs for parameter range
+                min_input = st.text_input(
+                    f'Minimum Value for {param}',
+                    value=str(0.0),  # Default min
+                    key=f'min_value_{param}'
+                )
+                max_input = st.text_input(
+                    f'Maximum Value for {param}',
+                    value=str(float('inf')),  # Default max
+                    key=f'max_value_{param}'
+                )
+                try:
+                    min_val = float(min_input)
+                    max_val = float(max_input)
+                    if min_val > max_val:
+                        raise ValueError("Minimum value cannot be greater than maximum value.")
+                    param_ranges[param] = {"min": min_val, "max": max_val}
+                except Exception as e:
+                    st.error(f'Invalid range for {param}: {e}')
+                    return
+                
+                st.divider()
+
             true_params = st.session_state['true_params']
             true_param_values = {}
             for param in selected_params:
@@ -193,46 +251,52 @@ def main():
                 else:
                     st.error(f"Parameter '{param}' not found in true scene parameters.")
                     return
-
             st.session_state['selected_params'] = selected_params
             st.session_state['param_new_values'] = param_new_values
             st.session_state['true_param_values'] = true_param_values
+            st.session_state['param_learning_rates'] = param_learning_rates
+            st.session_state['param_fd_epsilons'] = param_fd_epsilons
+            st.session_state['param_ranges'] = param_ranges
         else:
             st.write('Please load scenes to select parameters.')
             return
 
         # Section 5: Check requirements
-        if st.button('Check Requirements'):
-            if all(key in st.session_state for key in ['params', 'selected_params', 'param_new_values', 'true_param_values']):
+        if st.button('Update Settings and Check Requirements'):
+            if all(key in st.session_state for key in ['params', 'selected_params', 'param_new_values', 'true_param_values', 'param_learning_rates', 'param_fd_epsilons', 'param_ranges']):
                 # Prepare optimization config
                 opt_config = {
                     "optimizer": "Adam with finite differences",
-                    "learning_rate": learning_rate,
-                    "finite_difference_epsilon": fd_epsilon,
+                    "learning_rate": learning_rate,  # This can be deprecated or kept as a default
+                    "finite_difference_epsilon": fd_epsilon,  # Deprecated or default
                     "beta1": beta1,
                     "beta2": beta2,
                     "epsilon": epsilon,
                     "iterations": iterations,
                     "spp": spp,
-                    "parameters": [],  # List of parameters
                     "convergence_threshold": convergence_threshold,
                     "run_name": f"{user_given_name}_adam_spp_{spp}_lr_{learning_rate}_fd_{fd_epsilon}",
                     "output_dir": st.session_state.output_dir,
                     "user_given_name": user_given_name,
-                    "timestamp": st.session_state.timestamp
+                    "timestamp": st.session_state.timestamp,
+                    "parameters": []  # List of parameters with individual settings
                 }
 
                 for param in st.session_state['selected_params']:
                     opt_config["parameters"].append({
                         "param_key": param,
-                        "new_value": st.session_state['param_new_values'][param]
+                        "new_value": st.session_state['param_new_values'][param],
+                        "learning_rate": st.session_state['param_learning_rates'][param],
+                        "finite_difference_epsilon": st.session_state['param_fd_epsilons'][param],
+                        "min_value": st.session_state['param_ranges'][param]['min'],
+                        "max_value": st.session_state['param_ranges'][param]['max']
                     })
 
                 # Save opt_config to a JSON file to pass to the subprocess
                 st.session_state.opt_config_path = os.path.join(st.session_state.output_dir, 'opt_config.json')
                 try:
                     with open(st.session_state.opt_config_path, 'w') as f:
-                        json.dump(opt_config, f)
+                        json.dump(opt_config, f, indent=4)
                 except Exception as e:
                     st.error(f'Error saving optimization config: {e}')
                     return
@@ -258,6 +322,11 @@ def main():
                             return
                         # Read check_results.json from output_dir
                         check_results_path = os.path.join(st.session_state.output_dir, 'check_results.json')
+                        # Show the current contents of check_results.json
+                        with open(st.session_state.opt_config_path, 'r') as f:
+                            current_settings = json.load(f)
+                        st.write("Current settings:")
+                        st.write(current_settings)
                         if not os.path.exists(check_results_path):
                             st.error('Check results file not found.')
                             return

@@ -3,12 +3,114 @@ import torch
 import wandb
 import sys
 import cma
-
 import numpy as np
 
 from calc import compute_loss, cosine_lr, compute_total_loss
 
+def compute_gradient_for_param(scene, params, key, param_np, true_image_np, it, output_dir, spp, i, fd_eps, min_val, max_val):
+    """
+    Compute the gradient for a single parameter index using finite differences.
+    Uses forward difference if at minimum, backward difference if at maximum, and central difference otherwise.
+
+    Args:
+        scene: The Mitsuba scene object.
+        params: The parameters object from Mitsuba.
+        key (str): The parameter key.
+        param_np (np.ndarray): Current parameter values as a NumPy array.
+        true_image_np: The true image data as a NumPy array.
+        it (int): Current iteration number.
+        output_dir (str): Directory to save outputs.
+        spp (int): Samples per pixel.
+        i (int): Index of the parameter to compute the gradient for.
+        fd_eps (float): Finite difference epsilon for the parameter.
+        min_val (float): Minimum allowed value for the parameter.
+        max_val (float): Maximum allowed value for the parameter.
+
+    Returns:
+        float: The computed gradient for the parameter at index `i`.
+    """
+    original_value = param_np[i]
+
+    # Compute f(x) - current loss
+    f_x = compute_loss(scene, params, key, param_np, true_image_np, it, output_dir, spp)
+
+    # Determine which finite difference to use
+    if original_value <= min_val + 1e-8:
+        # Forward difference
+        param_np[i] = original_value + fd_eps
+        params[key] = param_np
+        params.update()
+        f_x_plus = compute_loss(scene, params, key, param_np, true_image_np, it, output_dir, spp)
+
+        # Reset to original value
+        param_np[i] = original_value
+        params[key] = param_np
+        params.update()
+
+        if not np.isfinite(f_x_plus):
+            print(f"Invalid loss encountered at parameter '{key}', index {i} during forward difference.", file=sys.stderr)
+            return 0.0  # Zero gradient if loss is invalid
+        else:
+            grad = (f_x_plus - f_x) / fd_eps
+            return grad
+
+    elif original_value >= max_val - 1e-8:
+        # Backward difference
+        param_np[i] = original_value - fd_eps
+        params[key] = param_np
+        params.update()
+        f_x_minus = compute_loss(scene, params, key, param_np, true_image_np, it, output_dir, spp)
+
+        # Reset to original value
+        param_np[i] = original_value
+        params[key] = param_np
+        params.update()
+
+        if not np.isfinite(f_x_minus):
+            print(f"Invalid loss encountered at parameter '{key}', index {i} during backward difference.", file=sys.stderr)
+            return 0.0  # Zero gradient if loss is invalid
+        else:
+            grad = (f_x - f_x_minus) / fd_eps
+            return grad
+
+    else:
+        # Central difference
+        # Compute f(x + epsilon)
+        param_np[i] = original_value + fd_eps
+        params[key] = param_np
+        params.update()
+        f_x_plus = compute_loss(scene, params, key, param_np, true_image_np, it, output_dir, spp)
+
+        # Compute f(x - epsilon)
+        param_np[i] = original_value - fd_eps
+        params[key] = param_np
+        params.update()
+        f_x_minus = compute_loss(scene, params, key, param_np, true_image_np, it, output_dir, spp)
+
+        # Reset to original value
+        param_np[i] = original_value
+        params[key] = param_np
+        params.update()
+
+        if not (np.isfinite(f_x_plus) and np.isfinite(f_x_minus)):
+            print(f"Invalid loss encountered at parameter '{key}', index {i} during central difference.", file=sys.stderr)
+            return 0.0  # Zero gradient if any loss is invalid
+        else:
+            grad = (f_x_plus - f_x_minus) / (2 * fd_eps)
+            return grad
+
 def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_dir):
+    """
+    Perform optimization using the Adam optimizer with per-parameter settings.
+
+    Args:
+        config (dict): Optimization configuration.
+        scene: The Mitsuba scene object.
+        params: The parameters object from Mitsuba.
+        true_image_np: The true image data as a NumPy array.
+        true_params_np (dict): True parameter values as a dictionary.
+        output_dir (str): Directory to save outputs.
+    """
     # Initialize parameters
     param_keys = [param['param_key'] for param in config["parameters"]]
     param_initial_values = {param['param_key']: np.array(param['new_value']).flatten() for param in config["parameters"]}
@@ -32,9 +134,7 @@ def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_
             raise ValueError(f'Parameter key {key} not found in scene parameters.')
     params.update()
 
-    # Adam optimizer hyperparameters
-    initial_lr = config["learning_rate"]
-    fd_epsilon = config["finite_difference_epsilon"]
+    # Extract Adam optimizer hyperparameters (common settings)
     beta1 = config["beta1"]
     beta2 = config["beta2"]
     epsilon = config["epsilon"]
@@ -45,49 +145,38 @@ def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_
     for it in range(1, iterations + 1):
         print(f"\n=== Iteration {it} ===")
 
-        # Compute dynamic learning rate using cosine schedule
-        lr = cosine_lr(initial_lr, it, iterations)
-        print(f"Learning rate (cosine decay): {lr}")
+        # Compute dynamic learning rate using cosine schedule (per parameter)
+        lr_dict = {}
+        for key in param_keys:
+            param_index = param_keys.index(key)
+            initial_lr = config["parameters"][param_index]["learning_rate"]
+            lr = cosine_lr(initial_lr, it, iterations)
+            lr_dict[key] = lr
+            print(f"Learning rate for {key} (cosine decay): {lr}")
 
         # Initialize gradients dictionary
         gradients = {}
 
         # Compute gradients for each parameter
         for key in param_keys:
+            param_index = param_keys.index(key)
             param_np = np.array(params[key]).flatten()
             grad = np.zeros_like(param_np)
+            fd_eps = config["parameters"][param_index]["finite_difference_epsilon"]
+            min_val = config["parameters"][param_index]["min_value"]
+            max_val = config["parameters"][param_index]["max_value"]
 
             for i in range(len(param_np)):
-                original_value = param_np[i]
-
-                # Compute loss for param + epsilon
-                param_np[i] = original_value + fd_epsilon
-                params[key] = param_np
-                params.update()
-                loss1 = compute_loss(scene, params, key, param_np, true_image_np, it, output_dir, spp)
-
-                # Compute loss for param - epsilon
-                param_np[i] = original_value - fd_epsilon
-                params[key] = param_np
-                params.update()
-                loss2 = compute_loss(scene, params, key, param_np, true_image_np, it, output_dir, spp)
-
-                # Reset the parameter to original value
-                param_np[i] = original_value
-                params[key] = param_np
-                params.update()
-
-                # Check if losses are finite
-                if not np.isfinite(loss1) or not np.isfinite(loss2):
-                    print(f"Invalid loss encountered at parameter '{key}', index {i} during iteration {it}")
-                    grad[i] = 0.0  # Set gradient to zero if loss is invalid
-                else:
-                    # Compute the gradient using central finite differences
-                    grad[i] = (loss1 - loss2) / (2 * fd_epsilon)
+                # Compute gradient using the new finite difference method
+                gradient = compute_gradient_for_param(
+                    scene, params, key, param_np, true_image_np, it, output_dir, spp,
+                    i, fd_eps, min_val, max_val
+                )
+                grad[i] = gradient
 
             gradients[key] = grad
 
-        # Update parameters using Adam optimizer
+        # Update parameters using Adam optimizer with per-parameter settings
         for key in param_keys:
             optimizer_states[key]['t'] += 1
             m = optimizer_states[key]['m']
@@ -104,10 +193,15 @@ def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_
             v_hat = v / (1 - beta2 ** optimizer_states[key]['t'])
 
             # Compute parameter update
+            lr = lr_dict[key]
             param_update = lr * m_hat / (np.sqrt(v_hat) + epsilon)
             param_np = np.array(params[key]).flatten() - param_update
-            # Clamp the parameter to ensure legal values
-            param_np = np.clip(param_np, 0.0, None)
+
+            # Clamp the parameter to the specified range
+            param_index = param_keys.index(key)
+            min_val = config["parameters"][param_index]["min_value"]
+            max_val = config["parameters"][param_index]["max_value"]
+            param_np = np.clip(param_np, min_val, max_val)
 
             # Update the parameter in the scene
             params[key] = param_np
@@ -135,7 +229,7 @@ def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_
         for key in param_keys:
             np_param = np.array(params[key]).flatten()
             true_param = param_true_values[key]
-            
+
             # Check if parameter is a vector (like RGB)
             if len(np_param) > 1:
                 # Log each component separately
@@ -156,8 +250,6 @@ def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_
     torch.cuda.empty_cache()
 
     print('\nOptimization complete.')
-    # No need to call params.update() here as it's already updated during parameter changes.
-
 
 
 
