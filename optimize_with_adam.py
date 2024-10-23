@@ -16,10 +16,10 @@ def main():
     param_key = 'Cube.interior_medium.scale'
 
     # Rendering parameters
-    spp = 462
+    spp = 64
 
     # Adam optimizer parameters
-    learning_rate = 1.0
+    learning_rate = 5.0
     fd_epsilon = 0.004
     beta1 = 0.9
     beta2 = 0.999
