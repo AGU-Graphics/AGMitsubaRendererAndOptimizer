@@ -40,6 +40,7 @@ def main():
     csv_path = args.csv_path
     image_data = load_csv(csv_path)
     new_image = create_image(image_data, args.width, args.height)
+    print(new_image)
     new_image_uint8 = convert_to_uint8(new_image)
 
     # Save the image

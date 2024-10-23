@@ -1,5 +1,6 @@
 import mitsuba as mi
 import numpy as np
+import numpy as np
 import wandb
 import os
 import time
@@ -13,12 +14,26 @@ def main():
 
     # Parameter key to optimize
     param_key = 'Cube.interior_medium.sigma_t.value.value'
+    param_key = 'Cube.interior_medium.sigma_t.value.value'
 
     # Rendering parameters
     spp = 16
+    spp = 16
 
     # CMA-ES parameters
+    # CMA-ES parameters
     iterations = 5000
+    sigma0 = 1.0
+    popsize = 4 + 3 * np.log(10)
+    tolx = 1e-8
+    tolfun = 1e-8
+    verbosity = 1
+    CMA_diagonal = False
+    bounds = [0.0, None]
+    seed = 42
+    epsilon = 1e-8
+    convergence_threshold = 1e-5
+
     sigma0 = 1.0
     popsize = 4 + 3 * np.log(10)
     tolx = 1e-8
@@ -39,8 +54,18 @@ def main():
 
     # Scene to optimize
     scene_path = 'scenes/scene.xml'
+    scene_path = 'scenes/scene.xml'
 
     opt_config = {
+        "optimizer": "CMA-ES",
+        "sigma0": sigma0,
+        "popsize": popsize,
+        "tolx": tolx,
+        "tolfun": tolfun,
+        "verbosity": verbosity,
+        "CMA_diagonal": CMA_diagonal,
+        "bounds": bounds,
+        "seed": seed,
         "optimizer": "CMA-ES",
         "sigma0": sigma0,
         "popsize": popsize,
@@ -54,15 +79,19 @@ def main():
         "spp": spp,
         "param_key": param_key,
         "epsilon": epsilon,
+        "param_key": param_key,
+        "epsilon": epsilon,
         "convergence_threshold": convergence_threshold,
         "lambda_tv": lambda_tv
     }
+
 
     
     # Initialize wandb
     wandb.init(
         project="mitsuba_optimization",
         config=opt_config,
+        name=f"cma_spp_{spp}_sigma0_{sigma0}",
         name=f"cma_spp_{spp}_sigma0_{sigma0}",
     )
 
@@ -81,6 +110,7 @@ def main():
         print(f"Error: Parameter key '{param_key}' not found in the scene parameters.")
         wandb.finish()
         return
+    
     
     try:
         true_scene = mi.load_file(true_scene_path)
@@ -108,9 +138,11 @@ def main():
 
     # Run the optimizer
     cma_es_optimizer(opt_config, scene, params, true_image_np, true_params_np, param_key, output_dir)
+    cma_es_optimizer(opt_config, scene, params, true_image_np, true_params_np, param_key, output_dir)
 
     # Finish the wandb run
     wandb.finish()
 
 if __name__ == "__main__":
     main()
+

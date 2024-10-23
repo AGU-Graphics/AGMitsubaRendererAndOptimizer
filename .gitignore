@@ -22,7 +22,7 @@ lib/
 lib64/
 parts/
 sdist/
-var/
+#var/
 wheels/
 share/python-wheels/
 *.egg-info/
@@ -180,3 +180,4 @@ pyrightconfig.json
 output/
 outputs/
 wandb/
+uploads/
