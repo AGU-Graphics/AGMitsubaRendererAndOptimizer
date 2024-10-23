@@ -69,7 +69,7 @@ def compute_loss(scene, params, param_key, param_values, true_image_np, it, outp
         image_np = np.array(image)
         # Save the image to disk for visualization (optional)
         if it % 10 == 0:
-            _image = (image * 255).astype('uint8')
+            _image = (image_np * 255).astype('uint8')
             mi.util.write_bitmap(f'{output_dir}/iter_{it:04d}.png', _image, write_async=True)
 
         #
