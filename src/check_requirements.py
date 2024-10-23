@@ -82,7 +82,7 @@ def main():
 
     # Render the true image
     try:
-        true_image = mi.Bitmap(true_image_np)  # Use Bitmap for proper rendering
+        true_image = (true_image_np * 255).astype('uint8')
         mi.util.write_bitmap(f"{opt_config['output_dir']}/true_image.png", true_image, write_async=True)
         del true_image
         gc.collect()
