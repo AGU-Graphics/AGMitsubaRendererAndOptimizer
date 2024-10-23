@@ -4,8 +4,8 @@ import wandb
 import os
 import time
 
-from src.optimizer import cma_es_optimizer
-from src.loader import load_true_image_and_values
+from optimizer import cma_es_optimizer
+from loader import load_true_image_and_values
 
 def main():
     # Set the variant to use
@@ -35,7 +35,7 @@ def main():
 
     # True Scene
     true_scene_path = 'scenes/true_scene.xml'
-    true_image_path = 'data/true_image_16.csv'
+    true_image_path = 'inputs/true_image_16.csv'
 
     # Scene to optimize
     scene_path = 'scenes/scene.xml'
@@ -103,7 +103,7 @@ def main():
 
     # Set the timestamp for the run
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    output_dir = f'output/CMA-ES/spp_{spp}_sigma0_{sigma0}_{timestamp}'
+    output_dir = f'outputs/CMA-ES/spp_{spp}_sigma0_{sigma0}_{timestamp}'
     os.makedirs(output_dir, exist_ok=True)
 
     # Run the optimizer

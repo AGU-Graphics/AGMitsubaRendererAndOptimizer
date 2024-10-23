@@ -178,4 +178,5 @@ pyrightconfig.json
 
 # For this project
 output/
+outputs/
 wandb/

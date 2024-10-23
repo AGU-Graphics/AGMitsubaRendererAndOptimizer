@@ -11,7 +11,7 @@ from src.loader import load_true_image_and_values
 
 def render_and_compare(scene, params, param_key, true_image_np, sigma_t_value, spp):
     # Set the current parameter value
-    params[param_key] = mi.Color3f(sigma_t_value)
+    params[param_key] = sigma_t_value
     params.update()
 
     # Render the scene with the new parameter value
@@ -79,7 +79,7 @@ def main():
 
     # True Scene
     true_scene_path = st.sidebar.text_input(label='True Scene Path', value='scenes/true_scene.xml')
-    true_image_path = st.sidebar.text_input(label='True Image CSV Path', value='data/true_image.csv')
+    true_image_path = st.sidebar.text_input(label='True Image CSV Path', value='inputs/true_image.csv')
 
     # Scene to optimize
     scene_path = 'scenes/scene.xml'
@@ -116,7 +116,7 @@ def main():
 
         # Set the timestamp for the run
         timestamp = time.strftime("%Y%m%d-%H%M%S")
-        output_dir = f'output/GridSearch/spp_{spp}_{timestamp}'
+        output_dir = f'outputs/GridSearch/spp_{spp}_{timestamp}'
         os.makedirs(output_dir, exist_ok=True)
 
         # Render the true image

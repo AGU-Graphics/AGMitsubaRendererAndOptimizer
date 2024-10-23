@@ -12,7 +12,7 @@ from src.loader import load_true_image_and_values
 
 def render_and_compare(scene, params, param_key, true_image_np, sigma_t_value, spp):
     # Set the current parameter value
-    params[param_key] = mi.Color3f(sigma_t_value)
+    params[param_key] = sigma_t_value
     params.update()
 
     # Render the scene with the new parameter value
@@ -208,7 +208,7 @@ def main():
 
     # Set the timestamp for the run
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    output_dir = f'output/GridSearch/spp_{spp}_grid_{grid_steps}_{timestamp}'
+    output_dir = f'outputs/GridSearch/spp_{spp}_grid_{grid_steps}_{timestamp}'
     os.makedirs(output_dir, exist_ok=True)
 
     # Reconstruct the true image from numpy array
