@@ -47,13 +47,13 @@ def compute_loss(scene, params, param_key, param_values, true_image_np, it, outp
         # Render the image
         image = renderer(scene, params, spp=spp)
 
-        # Save the image to disk for visualization (optional)
-        if it % 50 == 0:
-            output_image = (image * 255).astype(np.uint8)
-            mi.util.write_bitmap(f'{output_dir}/iter_{it:04d}.png', output_image, write_async=True)
-
         # Convert image to numpy array
         image = np.array(image)
+
+        # Save the image to disk for visualization (optional)
+        if it % 10 == 0:
+            _image = (image * 255).astype('uint8')
+            mi.util.write_bitmap(f'{output_dir}/iter_{it:04d}.png', _image, write_async=True)
 
         #
         # # Compute the mean squared error loss
