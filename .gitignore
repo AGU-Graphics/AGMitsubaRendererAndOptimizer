@@ -181,3 +181,6 @@ output/
 outputs/
 wandb/
 uploads/
+.idea/
+__pycache__/
+src/__pycache__/
