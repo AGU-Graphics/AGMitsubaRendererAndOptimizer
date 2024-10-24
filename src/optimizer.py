@@ -7,7 +7,7 @@ import numpy as np
 
 from calc import compute_loss, cosine_lr, compute_total_loss
 
-def compute_gradient_for_param(scene, params, key, param_np, true_image_np, it, output_dir, spp, i, fd_eps, min_val, max_val):
+def compute_gradient_for_param(scene, params, key, param_np, target_image_np, it, output_dir, spp, i, fd_eps, min_val, max_val):
     """
     Compute the gradient for a single parameter index using finite differences.
     Uses forward difference if at minimum, backward difference if at maximum, and central difference otherwise.
@@ -17,7 +17,7 @@ def compute_gradient_for_param(scene, params, key, param_np, true_image_np, it, 
         params: The parameters object from Mitsuba.
         key (str): The parameter key.
         param_np (np.ndarray): Current parameter values as a NumPy array.
-        true_image_np: The true image data as a NumPy array.
+        target_image_np: The target image data as a NumPy array.
         it (int): Current iteration number.
         output_dir (str): Directory to save outputs.
         spp (int): Samples per pixel.
@@ -32,7 +32,7 @@ def compute_gradient_for_param(scene, params, key, param_np, true_image_np, it, 
     original_value = param_np[i]
 
     # Compute f(x) - current loss
-    f_x = compute_loss(scene, params, key, param_np, true_image_np, it, output_dir, spp)
+    f_x = compute_loss(scene, params, key, param_np, target_image_np, it, output_dir, spp)
 
     # Determine which finite difference to use
     if original_value <= min_val + 1e-8:
@@ -40,7 +40,7 @@ def compute_gradient_for_param(scene, params, key, param_np, true_image_np, it, 
         param_np[i] = original_value + fd_eps
         params[key] = param_np
         params.update()
-        f_x_plus = compute_loss(scene, params, key, param_np, true_image_np, it, output_dir, spp)
+        f_x_plus = compute_loss(scene, params, key, param_np, target_image_np, it, output_dir, spp)
 
         # Reset to original value
         param_np[i] = original_value
@@ -59,7 +59,7 @@ def compute_gradient_for_param(scene, params, key, param_np, true_image_np, it, 
         param_np[i] = original_value - fd_eps
         params[key] = param_np
         params.update()
-        f_x_minus = compute_loss(scene, params, key, param_np, true_image_np, it, output_dir, spp)
+        f_x_minus = compute_loss(scene, params, key, param_np, target_image_np, it, output_dir, spp)
 
         # Reset to original value
         param_np[i] = original_value
@@ -79,7 +79,7 @@ def compute_gradient_for_param(scene, params, key, param_np, true_image_np, it, 
         param_np[i] = original_value + fd_eps
         params[key] = param_np
         params.update()
-        f_x_plus = compute_loss(scene, params, key, param_np, true_image_np, it, output_dir, spp)
+        f_x_plus = compute_loss(scene, params, key, param_np, target_image_np, it, output_dir, spp)
 
         # Reset to original value
         param_np[i] = original_value
@@ -90,7 +90,7 @@ def compute_gradient_for_param(scene, params, key, param_np, true_image_np, it, 
         param_np[i] = original_value - fd_eps
         params[key] = param_np
         params.update()
-        f_x_minus = compute_loss(scene, params, key, param_np, true_image_np, it, output_dir, spp)
+        f_x_minus = compute_loss(scene, params, key, param_np, target_image_np, it, output_dir, spp)
 
         # Reset to original value
         param_np[i] = original_value
@@ -105,7 +105,7 @@ def compute_gradient_for_param(scene, params, key, param_np, true_image_np, it, 
             grad = (f_x_plus - f_x_minus) / (2 * fd_eps)
             return grad
 
-def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_dir):
+def adam_optimizer(config, scene, params, target_image_np, output_dir):
     """
     Perform optimization using the Adam optimizer with per-parameter settings.
 
@@ -113,7 +113,161 @@ def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_
         config (dict): Optimization configuration.
         scene: The Mitsuba scene object.
         params: The parameters object from Mitsuba.
-        true_image_np: The true image data as a NumPy array.
+        target_image_np: The target image data as a NumPy array.
+        output_dir (str): Directory to save outputs.
+    """
+    # Initialize parameters
+    param_keys = [param['param_key'] for param in config["parameters"]]
+    param_initial_values = {param['param_key']: np.array(param['new_value']).flatten() for param in config["parameters"]}
+
+    # Initialize optimizer states for each parameter
+    optimizer_states = {}
+    for key in param_keys:
+        optimizer_states[key] = {
+            'm': np.zeros_like(param_initial_values[key]),
+            'v': np.zeros_like(param_initial_values[key]),
+            't': 0
+        }
+
+    # Set initial parameter values in the scene
+    for key, value in param_initial_values.items():
+        if key in params:
+            params[key] = value
+        else:
+            print(f'Parameter key {key} not found in scene parameters.', file=sys.stderr)
+            raise ValueError(f'Parameter key {key} not found in scene parameters.')
+    params.update()
+
+    # Extract Adam optimizer hyperparameters (common settings)
+    beta1 = config["beta1"]
+    beta2 = config["beta2"]
+    epsilon = config["epsilon"]
+    iterations = config["iterations"]
+    spp = config["spp"]
+    convergence_threshold = config["convergence_threshold"]
+
+    for it in range(1, iterations + 1):
+        print(f"\n=== Iteration {it} ===")
+        # Store the previous parameters for comparison
+        prev_params = {key: np.array(params[key]).flatten() for key in param_keys}
+
+        # Compute dynamic learning rate using cosine schedule (per parameter)
+        lr_dict = {}
+        for key in param_keys:
+            param_index = param_keys.index(key)
+            initial_lr = config["parameters"][param_index]["learning_rate"]
+            lr = cosine_lr(initial_lr, it, iterations)
+            lr_dict[key] = lr
+            print(f"Learning rate for {key} (cosine decay): {lr}")
+
+        # Initialize gradients dictionary
+        gradients = {}
+
+        # Compute gradients for each parameter
+        for key in param_keys:
+            param_index = param_keys.index(key)
+            param_np = np.array(params[key]).flatten()
+            grad = np.zeros_like(param_np)
+            fd_eps = config["parameters"][param_index]["finite_difference_epsilon"]
+            min_val = config["parameters"][param_index]["min_value"]
+            max_val = config["parameters"][param_index]["max_value"]
+
+            for i in range(len(param_np)):
+                # Compute gradient using the new finite difference method
+                gradient = compute_gradient_for_param(
+                    scene, params, key, param_np, target_image_np, it, output_dir, spp,
+                    i, fd_eps, min_val, max_val
+                )
+                grad[i] = gradient
+
+            gradients[key] = grad
+
+        # Update parameters using Adam optimizer with per-parameter settings
+        for key in param_keys:
+            optimizer_states[key]['t'] += 1
+            m = optimizer_states[key]['m']
+            v = optimizer_states[key]['v']
+            g = gradients[key]
+
+            ## Update biased first moment estimate
+            m = beta1 * m + (1 - beta1) * g
+            # Update biased second raw moment estimate
+            v = beta2 * v + (1 - beta2) * (g ** 2)
+            # Save updated m and v back to optimizer_states
+            optimizer_states[key]['m'] = m
+            optimizer_states[key]['v'] = v
+            # Compute bias-corrected estimates
+            m_hat = m / (1 - beta1 ** optimizer_states[key]['t'])
+            v_hat = v / (1 - beta2 ** optimizer_states[key]['t'])
+
+            # Compute parameter update
+            lr = lr_dict[key]
+            param_update = lr * m_hat / (np.sqrt(v_hat) + epsilon)
+            param_np = np.array(params[key]).flatten() - param_update
+
+            # Clamp the parameter to the specified range
+            param_index = param_keys.index(key)
+            min_val = config["parameters"][param_index]["min_value"]
+            max_val = config["parameters"][param_index]["max_value"]
+            param_np = np.clip(param_np, min_val, max_val)
+
+            # Update the parameter in the scene
+            params[key] = param_np
+            params.update()
+
+            print(f"Updated parameters for {key}: {param_np}")
+
+        # Compute relative change in parameters for convergence check
+        rel_change = np.array([np.abs(params[key] - prev_params[key]) / (np.abs(prev_params[key]) + epsilon) for key in param_keys])
+
+        # Compute total loss across all parameters
+        total_loss = compute_total_loss(scene, params, target_image_np, spp)
+        print(f"Total Loss: {total_loss}")
+
+        # Check convergence based on relative change
+        if np.all(rel_change < convergence_threshold):
+            print(f"Convergence criterion met at iteration {it}.")
+            for key in param_keys:
+                print(f"Fitted parameter '{key}': {params[key]}")
+            # Log convergence information to wandb
+            wandb.log({"iteration": it, "convergence": True, "total_loss": total_loss})
+            break
+
+        # Log parameters and their differences to wandb
+        log_dict = {"iteration": it, "total_loss": total_loss}
+        for key in param_keys:
+            np_param = np.array(params[key]).flatten()
+
+            # Check if parameter is a vector (like RGB)
+            if len(np_param) > 1:
+                # Log each component separately
+                for i, param_val in enumerate(np_param):
+                    component = ['r', 'g', 'b'][i] if i < 3 else str(i)  # Handle RGB or other vectors
+                    log_dict[f'{key}_{component}'] = float(param_val)
+            else:
+                # Log the scalar parameter and its difference
+                log_dict[f'{key}'] = float(np_param[0])
+
+        wandb.log(log_dict)
+
+    # Finally delete all items used in the optimization
+    del scene, params, target_image_np
+    gc.collect()
+    torch.cuda.empty_cache()
+
+    print('\nOptimization complete.')
+
+
+
+def adam_optimizer_virtual_scene(config, scene, params, target_image_np, true_params_np, output_dir):
+    """
+    Perform optimization using the Adam optimizer with per-parameter settings.
+
+    Args:
+        config (dict): Optimization configuration.
+        scene: The Mitsuba scene object.
+        params: The parameters object from Mitsuba.
+        target_image_np: The true image data as a NumPy array.
         true_params_np (dict): True parameter values as a dictionary.
         output_dir (str): Directory to save outputs.
     """
@@ -177,7 +331,7 @@ def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_
             for i in range(len(param_np)):
                 # Compute gradient using the new finite difference method
                 gradient = compute_gradient_for_param(
-                    scene, params, key, param_np, true_image_np, it, output_dir, spp,
+                    scene, params, key, param_np, target_image_np, it, output_dir, spp,
                     i, fd_eps, min_val, max_val
                 )
                 grad[i] = gradient
@@ -224,7 +378,7 @@ def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_
         rel_change = np.array([np.abs(params[key] - prev_params[key]) / (np.abs(prev_params[key]) + epsilon) for key in param_keys])
 
         # Compute total loss across all parameters
-        total_loss = compute_total_loss(scene, params, true_image_np, spp)
+        total_loss = compute_total_loss(scene, params, target_image_np, spp)
         print(f"Total Loss: {total_loss}")
 
         # Check convergence based on relative change
@@ -258,7 +412,7 @@ def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_
         wandb.log(log_dict)
 
     # Finally delete all items used in the optimization
-    del scene, params, true_image_np, true_params_np
+    del scene, params, target_image_np, true_params_np
     gc.collect()
     torch.cuda.empty_cache()
 
@@ -266,7 +420,7 @@ def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_
 
 
 
-def cma_es_optimizer(scene, params, config, true_image_np, true_params_np, key, output_dir):
+def cma_es_optimizer(scene, params, config, target_image_np, true_params_np, key, output_dir):
     # Initialize the parameter
     param_initial = np.array(params[key]).flatten()
     
@@ -297,7 +451,7 @@ def cma_es_optimizer(scene, params, config, true_image_np, true_params_np, key, 
         losses = []
         for solution in solutions:
             it += 1
-            loss = compute_loss(scene, params, key, solution, true_image_np, it, output_dir, config["spp"])
+            loss = compute_loss(scene, params, key, solution, target_image_np, it, output_dir, config["spp"])
             losses.append(loss)
 
             # Log intermediate results every 50 iterations

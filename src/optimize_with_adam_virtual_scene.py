@@ -7,13 +7,14 @@ import gc
 import sys
 import wandb
 
-from optimizer import adam_optimizer
+from optimizer import adam_optimizer_virtual_scene
 from loader import load_true_image_and_values
 
 def main():
     parser = argparse.ArgumentParser(description='Run optimization with Adam.')
     parser.add_argument('--scene', type=str, required=True, help='Path to the Mitsuba scene XML file.')
-    parser.add_argument('--target_image_path', type=str, required=True, help='Path to the target image CSV file.')
+    parser.add_argument('--true_scene', type=str, required=True, help='Path to the true Mitsuba scene XML file.')
+    parser.add_argument('--true_image_path', type=str, required=True, help='Path to the true image CSV file.')
     parser.add_argument('--opt_config', type=str, required=True, help='Path to the optimization config JSON file.')
     parser.add_argument('--venv_path', type=str, default='.venv', help='Path to the virtual environment.')
     args = parser.parse_args()
@@ -53,38 +54,44 @@ def main():
         print(f'Error setting initial parameters: {e}', file=sys.stderr)
         exit(1)
 
-    # Load target image
+    # Load true parameters
     try:
+        true_scene = mi.load_file(args.true_scene)
         param_keys = [param['param_key'] for param in opt_config["parameters"]]
-        target_image_np, _ = load_true_image_and_values(
-            args.target_image_path,
-            scene,
+        true_image_np, true_params_np = load_true_image_and_values(
+            args.true_image_path,
+            true_scene,
             param_keys,
             output_dir
         )
-        if target_image_np is None:
-            raise ValueError("Failed to load target image.")
+        if true_image_np is None or true_params_np is None:
+            raise ValueError("Failed to load true image or true parameters.")
     except Exception as e:
-        print(f'Error loading target image: {e}', file=sys.stderr)
+        print(f'Error loading true image and parameters: {e}', file=sys.stderr)
         exit(1)
 
     # Initialize wandb
     try:
         wandb.init(
-            project="mitsuba_optimization_real_scene",
+            project="mitsuba_optimization_virtual_scene",
             config=opt_config,
             name=opt_config.get('run_name', 'default_run'),
         )
+
+        # Log the true parameters as a wandb config
+        wandb.config.update({
+            "true_parameters": {k: v.tolist() for k, v in true_params_np.items()}
+        })
     except Exception as e:
         print(f'Error initializing wandb: {e}', file=sys.stderr)
         exit(1)
 
     # Run the optimizer
     try:
-        adam_optimizer(config=opt_config, scene=scene, params=params, target_image_np=target_image_np, output_dir=output_dir)
+        adam_optimizer_virtual_scene(config=opt_config, scene=scene, params=params, true_image_np=true_image_np, true_params_np=true_params_np, output_dir=output_dir)
         print('Optimization completed successfully.')
         # Free memory
-        del scene, params, target_image_np
+        del scene, true_scene, params, true_image_np, true_params_np
         gc.collect()
         torch.cuda.empty_cache()
     except Exception as e:

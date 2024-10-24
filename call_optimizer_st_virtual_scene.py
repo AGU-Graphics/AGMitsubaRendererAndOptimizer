@@ -8,7 +8,7 @@ import numpy as np
 import streamlit as st
 
 def main():
-    st.title('Optimizer using Real Scenes')
+    st.title('Optimizer using Virtual Scenes')
 
     # Number of parameters to optimize
     num_params = st.sidebar.number_input('Number of Parameters to Optimize', value=1, min_value=1, step=1)
@@ -53,14 +53,14 @@ def main():
             st.error('Please provide an experiment name.')
             return
         st.session_state.timestamp = time.strftime("%Y%m%d-%H%M%S")
-        st.session_state.output_dir = f'outputs/Adam/{user_given_name}_spp_{spp}_{st.session_state.timestamp}'
+        st.session_state.output_dir = f'outputs/Adam/{user_given_name}_spp_{spp}_lr_{learning_rate}_{st.session_state.timestamp}'
         os.makedirs(st.session_state.output_dir, exist_ok=True)
         st.success(f'Output directory initialized: {st.session_state.output_dir}')
 
     if st.session_state.output_dir is not None:
 
         # Section 3: Select scenes
-        st.header('Select the Scene and the Target Image')
+        st.header('Select Scenes and True Image')
 
         # Scan 'scenes/' directory for XML files
         scene_dir = 'scenes/'
@@ -74,7 +74,10 @@ def main():
             return
 
         scene_file = st.selectbox('Select Scene to Optimize', xml_files)
+        true_scene_file = st.selectbox('Select True Scene', xml_files)
+
         scene_path = os.path.join(scene_dir, scene_file)
+        true_scene_path = os.path.join(scene_dir, true_scene_file)
 
         image_dir = 'inputs/'
         if not os.path.isdir(image_dir):
@@ -86,7 +89,7 @@ def main():
             st.error('No CSV files found in inputs/ directory.')
             return
 
-        target_image_path = st.selectbox('Select the Target Image [csv]', csv_files)
+        true_image_path = st.selectbox('Select True Image', csv_files)
 
         # Load the scenes and get parameters when a button is clicked
         if st.button('Load Scenes'):
@@ -107,6 +110,24 @@ def main():
                     st.session_state['params'] = params
                     st.session_state['param_keys'] = param_keys
                     st.session_state['scene_path'] = scene_path
+                except Exception as e:
+                    st.error(f'Error during subprocess execution: {e}')
+                    return
+
+                # Repeat for true_scene
+                try:
+                    result = subprocess.run(
+                        [python_exec, 'src/get_parameters_from_scene.py', '--scene', true_scene_path],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        text=True
+                    )
+                    if result.returncode != 0:
+                        st.error(f'Error loading true scene:\n{result.stderr}')
+                        return
+                    true_params = json.loads(result.stdout)
+                    st.session_state['true_params'] = true_params
+                    st.session_state['true_scene_path'] = true_scene_path
                 except Exception as e:
                     st.error(f'Error during subprocess execution: {e}')
                     return
@@ -219,8 +240,20 @@ def main():
                 
                 st.divider()
 
+            true_params = st.session_state['true_params']
+            true_param_values = {}
+            for param in selected_params:
+                if param in true_params:
+                    true_value = true_params[param]
+                    formatted_true = array_to_string(true_value)
+                    true_param_values[param] = true_value
+                    st.write(f"True parameter value for {param}: {formatted_true}")
+                else:
+                    st.error(f"Parameter '{param}' not found in true scene parameters.")
+                    return
             st.session_state['selected_params'] = selected_params
             st.session_state['param_new_values'] = param_new_values
+            st.session_state['true_param_values'] = true_param_values
             st.session_state['param_learning_rates'] = param_learning_rates
             st.session_state['param_fd_epsilons'] = param_fd_epsilons
             st.session_state['param_ranges'] = param_ranges
@@ -230,7 +263,7 @@ def main():
 
         # Section 5: Check requirements
         if st.button('Update Settings and Check Requirements'):
-            if all(key in st.session_state for key in ['params', 'selected_params', 'param_new_values', 'param_learning_rates', 'param_fd_epsilons', 'param_ranges']):
+            if all(key in st.session_state for key in ['params', 'selected_params', 'param_new_values', 'true_param_values', 'param_learning_rates', 'param_fd_epsilons', 'param_ranges']):
                 # Prepare optimization config
                 opt_config = {
                     "optimizer": "Adam with finite differences",
@@ -274,9 +307,10 @@ def main():
                         result = subprocess.run(
                             [
                                 python_exec,
-                                'src/check_requirements.py',
+                                'src/check_requirements_virtual_scene.py',
                                 '--scene', st.session_state['scene_path'],
-                                '--target_image_path', os.path.join(image_dir, target_image_path),
+                                '--true_scene', st.session_state['true_scene_path'],
+                                '--true_image_path', os.path.join(image_dir, true_image_path),
                                 '--opt_config', st.session_state.opt_config_path,
                             ],
                             stdout=subprocess.PIPE,
@@ -319,9 +353,10 @@ def main():
                         result = subprocess.run(
                             [
                                 python_exec,
-                                'src/optimize_with_adam.py',
+                                'src/optimize_with_adam_virtual_scene.py',
                                 '--scene', st.session_state['scene_path'],
-                                '--target_image_path', os.path.join(image_dir, target_image_path),
+                                '--true_scene', st.session_state['true_scene_path'],
+                                '--true_image_path', os.path.join(image_dir, true_image_path),
                                 '--opt_config', st.session_state.opt_config_path,
                                 '--venv_path', venv_path
                             ],

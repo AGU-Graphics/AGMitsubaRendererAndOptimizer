@@ -12,7 +12,8 @@ from loader import load_true_image_and_values
 def main():
     parser = argparse.ArgumentParser(description='Check requirements before optimization.')
     parser.add_argument('--scene', type=str, required=True, help='Path to the Mitsuba scene XML file.')
-    parser.add_argument('--target_image_path', type=str, required=True, help='Path to the true image CSV file.')
+    parser.add_argument('--true_scene', type=str, required=True, help='Path to the true Mitsuba scene XML file.')
+    parser.add_argument('--true_image_path', type=str, required=True, help='Path to the true image CSV file.')
     parser.add_argument('--opt_config', type=str, required=True, help='Path to the optimization config JSON file.')
     # Removed --param_key and --new_value since parameters are in opt_config
     args = parser.parse_args()
@@ -27,6 +28,7 @@ def main():
         print(f'Error loading opt_config: {e}', file=sys.stderr)
         exit(1)
 
+
     # Initialize results dictionary
     results = {'success': True, 'errors': []}
 
@@ -34,7 +36,7 @@ def main():
     try:
         scene = mi.load_file(args.scene)
         params = mi.traverse(scene)
-        del params
+        del scene, params
         gc.collect()
         torch.cuda.empty_cache()
     except Exception as e:
@@ -45,22 +47,30 @@ def main():
             json.dump(results, f)
         exit(1)
 
-    # Load the target image
+    # Load true scene
     try:
-        target_image_path = args.target_image_path
+        true_scene = mi.load_file(args.true_scene)
+    except Exception as e:
+        results['success'] = False
+        results['errors'].append(f'Error loading true scene: {e}')
+        check_results_path = os.path.join(opt_config['output_dir'], 'check_results.json')
+        with open(check_results_path, 'w') as f:
+            json.dump(results, f)
+        exit(1)
+
+    # Load the true image and true parameters
+    try:
+        true_image_path = args.true_image_path
         # Assuming load_true_image_and_values can handle multiple parameters
         param_keys = [param['param_key'] for param in opt_config['parameters']]
-        target_image_np, _ = load_true_image_and_values(
-            target_image_path,
-            scene,
+        true_image_np, true_params_np = load_true_image_and_values(
+            true_image_path,
+            true_scene,
             param_keys,
             output_dir=opt_config['output_dir']
         )
-        if target_image_np is None:
+        if true_image_np is None or true_params_np is None:
             raise ValueError("Failed to load true image or true parameters.")
-        del scene
-        gc.collect()
-        torch.cuda.empty_cache()
     except Exception as e:
         results['success'] = False
         results['errors'].append(f'Error loading true image and parameters: {e}')
@@ -71,7 +81,7 @@ def main():
 
     # Render the true image
     try:
-        true_image = (target_image_np * 255).astype('uint8')
+        true_image = (true_image_np * 255).astype('uint8')
         mi.util.write_bitmap(f"{opt_config['output_dir']}/true_image.png", true_image, write_async=True)
         del true_image
         gc.collect()
@@ -92,7 +102,7 @@ def main():
         json.dump(results, f)
         
     # Free memory
-    del target_image_np
+    del true_scene, true_image_np, true_params_np
     gc.collect()
     torch.cuda.empty_cache()
 
