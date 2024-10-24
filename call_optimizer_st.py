@@ -242,7 +242,7 @@ def main():
                     "iterations": iterations,
                     "spp": spp,
                     "convergence_threshold": convergence_threshold,
-                    "run_name": f"{user_given_name}_adam_spp_{spp}_lr_{learning_rate}_fd_{fd_epsilon}",
+                    "run_name": f"{user_given_name}_adam_spp_{spp}_it_{iterations}_{st.session_state.timestamp}",
                     "output_dir": st.session_state.output_dir,
                     "user_given_name": user_given_name,
                     "timestamp": st.session_state.timestamp,
