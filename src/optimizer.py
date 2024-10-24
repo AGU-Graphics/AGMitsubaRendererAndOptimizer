@@ -144,6 +144,8 @@ def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_
 
     for it in range(1, iterations + 1):
         print(f"\n=== Iteration {it} ===")
+        # Store the previous parameters for comparison
+        prev_params = {key: np.array(params[key]).flatten() for key in param_keys}
 
         # Compute dynamic learning rate using cosine schedule (per parameter)
         lr_dict = {}
@@ -210,12 +212,15 @@ def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_
             print(f"Updated parameters for {key}: {param_np}")
             print(f"{key} parameters vs True: {param_np - param_true_values[key]}")
 
+        # Compute relative change in parameters for convergence check
+        rel_change = np.array([np.abs(params[key] - prev_params[key]) / (np.abs(prev_params[key]) + epsilon) for key in param_keys])
+
         # Compute total loss across all parameters
         total_loss = compute_total_loss(scene, params, true_image_np, spp)
         print(f"Total Loss: {total_loss}")
 
-        # Check convergence based on total loss
-        if total_loss < convergence_threshold:
+        # Check convergence based on relative change
+        if np.all(rel_change < convergence_threshold):
             print(f"Convergence criterion met at iteration {it}.")
             for key in param_keys:
                 print(f"Fitted parameter '{key}': {params[key]}")

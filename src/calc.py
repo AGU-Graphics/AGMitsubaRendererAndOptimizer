@@ -52,11 +52,15 @@ def compute_loss(scene, params, param_key, param_values, true_image_np, it, outp
 
         # Save the image to disk for visualization (optional)
         if it % 10 == 0:
-            _image = (image_np * 255).astype('uint8')
+            _image = (image * 255).astype('uint8')
             mi.util.write_bitmap(f'{output_dir}/iter_{it:04d}.png', _image, write_async=True)
+            del _image
+            gc.collect()
+            torch.cuda.empty_cache()
 
         # Compute the Huber loss
-        loss = calc_huber_loss(image, true_image_np, delta=0.05)
+        # loss = calc_huber_loss(image, true_image_np, delta=0.05)
+        loss = calc_mse(image, true_image_np)
 
         # Delete the image to free up memory
         del image
