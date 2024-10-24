@@ -99,9 +99,9 @@
         </transform>
         <bsdf type="null"/>
         <medium name="interior" type="homogeneous">
-            <rgb name="sigma_t" value="1"/>
+            <float name="sigma_t" value="1"/>
             <float name="scale" value="100"/>
-            <rgb name="albedo" value="0.99"/>
+            <float name="albedo" value="0.99"/>
             <phase type="hg">
                 <float name="g" value="0.1"/>
             </phase>
@@ -112,7 +112,7 @@
 		<float name="radius" value="0.005" />
 		<point name="center" x="0.175" y="0" z="0" />
 		<emitter type="area">
-			<rgb name="radiance" value="700" />
+			<float name="radiance" value="700" />
 		</emitter>
 	</shape>
 </scene>

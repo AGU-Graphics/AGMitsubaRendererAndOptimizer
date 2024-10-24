@@ -224,13 +224,17 @@ def adam_optimizer(config, scene, params, target_image_np, output_dir):
         total_loss = compute_total_loss(scene, params, target_image_np, spp)
         print(f"Total Loss: {total_loss}")
 
+        # Print if convergence criterion is met
+        for rel, key in zip(rel_change, param_keys):
+            print(f"Converged for {key}: {rel < convergence_threshold}")
+
         # Check convergence based on relative change
         if np.all(rel_change < convergence_threshold):
             print(f"Convergence criterion met at iteration {it}.")
             for key in param_keys:
                 print(f"Fitted parameter '{key}': {params[key]}")
             # Log convergence information to wandb
-            wandb.log({"iteration": it, "convergence": True, "total_loss": total_loss})
+            wandb.log({"iteration": it, "total_loss": total_loss})
             break
 
         # Log parameters and their differences to wandb
