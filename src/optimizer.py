@@ -81,6 +81,11 @@ def compute_gradient_for_param(scene, params, key, param_np, true_image_np, it, 
         params.update()
         f_x_plus = compute_loss(scene, params, key, param_np, true_image_np, it, output_dir, spp)
 
+        # Reset to original value
+        param_np[i] = original_value
+        params[key] = param_np
+        params.update()
+
         # Compute f(x - epsilon)
         param_np[i] = original_value - fd_eps
         params[key] = param_np
@@ -91,6 +96,7 @@ def compute_gradient_for_param(scene, params, key, param_np, true_image_np, it, 
         param_np[i] = original_value
         params[key] = param_np
         params.update()
+
 
         if not (np.isfinite(f_x_plus) and np.isfinite(f_x_minus)):
             print(f"Invalid loss encountered at parameter '{key}', index {i} during central difference.", file=sys.stderr)
@@ -185,13 +191,15 @@ def adam_optimizer(config, scene, params, true_image_np, true_params_np, output_
             v = optimizer_states[key]['v']
             g = gradients[key]
 
-            # Update biased first moment estimate
+            ## Update biased first moment estimate
             m = beta1 * m + (1 - beta1) * g
             # Update biased second raw moment estimate
             v = beta2 * v + (1 - beta2) * (g ** 2)
-            # Compute bias-corrected first moment estimate
+            # Save updated m and v back to optimizer_states
+            optimizer_states[key]['m'] = m
+            optimizer_states[key]['v'] = v
+            # Compute bias-corrected estimates
             m_hat = m / (1 - beta1 ** optimizer_states[key]['t'])
-            # Compute bias-corrected second raw moment estimate
             v_hat = v / (1 - beta2 ** optimizer_states[key]['t'])
 
             # Compute parameter update
